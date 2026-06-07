@@ -1,0 +1,27 @@
+# Data (too large for git)
+data/
+type_graphs/
+
+# Outputs
+submission_*.csv
+fafb_ids_*.txt
+fafb_root_ids.txt
+submission_mega_*.txt
+
+# Documentation (internal, Italian)
+docs/
+
+# Papers
+papers/
+
+# Report (LaTeX build artifacts + source)
+report/
+
+# Python
+__pycache__/
+*.pyc
+*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
