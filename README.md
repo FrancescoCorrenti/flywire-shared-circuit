@@ -54,6 +54,49 @@ The greedy approach converges to ~4,000-4,500 neurons independently of seed choi
 
 Biological interpretation, figures, and references are in [`science.md`](science.md).
 
+## Quickstart
+
+### 1. Download data
+
+Place the following files under `data/` (not included in this repository):
+
+| Path | Source |
+|------|--------|
+| `data/fafb_783_edge_list.csv` | FlyWire challenge edge lists |
+| `data/banc_626_edge_list.csv` | FlyWire challenge edge lists |
+| `data/mcns_0.9_edge_list.csv` | FlyWire challenge edge lists |
+| `data/FAFB/classification.csv.gz` | FlyWire Codex — FAFB annotations |
+| `data/FAFB/consolidated_cell_types.csv.gz` | FlyWire Codex — FAFB cell types |
+| `data/BANC/codex_annotations_flat_table.tab` | FlyWire Codex — BANC annotations |
+| `data/MCNS/body-annotations-male-cns-v0.9-minconf-0.5.feather` | NeuPrint — Male CNS annotations |
+
+### 2. Install dependencies
+
+```bash
+pip install networkx pandas pyarrow
+```
+
+### 3. Run the pipeline
+
+```bash
+# Build neuron annotation tables
+python src/01_dataset/build_dataset.py
+
+# Build the conserved type graph
+python src/02_type_graph/build_type_graph.py
+
+# Grow circuits (8 parallel workers, ~30-60 min)
+python src/03_grow/grow.py --template all_types.csv --n-seeds 3 --n-workers 8
+
+# Merge worker results into the best circuit
+python src/04_merge/merge.py --template all_types.csv --pkl-dir runs_all_types
+
+# Verify and export CSV
+python src/05_verify/verify.py --pkl type_graphs/runs_all_types/worker_099_mega.pkl --csv network.csv
+```
+
+The final `network.csv` contains N rows of `(fafb_id, banc_id, mcns_id)` triplets.
+
 ## Limitations
 
 1. **Type correspondence assumption.** Matching neurons only by cell type is a strong constraint: it makes the result sensitive to annotation quality and consistency across datasets.
