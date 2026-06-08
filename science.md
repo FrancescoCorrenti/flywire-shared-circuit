@@ -33,7 +33,7 @@ Two thirds of the circuit sits in ${\color[RGB]{68,119,170}\text{OL}}$. This is 
 
 ## Graph topology
 
-The circuit type graph has 673 nodes and 1,133 directed edges. Feedforward loops outnumber 3-cycles 407:153 (ratio 2.7:1), so the overall architecture leans heavily feedforward. Only 94 edge pairs (8.3%) are reciprocal, and most of those sit at the ${\color[RGB]{238,102,119}\text{CB}}$-${\color[RGB]{34,136,51}\text{SE}}$ interface (38 pairs, the ORN-lLN back-and-forth in the antennal lobe) or within ${\color[RGB]{238,102,119}\text{CB}}$ itself (33 pairs).
+The circuit type graph has 673 nodes and 1,133 directed edges. Feedforward loops outnumber 3-cycles 407:153 (ratio 2.7:1), so the overall architecture leans heavily feedforward. Only 94 edge pairs (8.3%) are reciprocal, and most of those sit at the ${\color[RGB]{238,102,119}\text{CB}}$ - ${\color[RGB]{34,136,51}\text{SE}}$ interface (38 pairs, the ORN-lLN back-and-forth in the antennal lobe) or within ${\color[RGB]{238,102,119}\text{CB}}$ itself (33 pairs).
 
 The inter-class flow matrix is almost strictly feedforward:
 
@@ -49,7 +49,7 @@ The two heaviest inter-class flows are ${\color[RGB]{68,119,170}\text{OL}}$ → 
 
 ![Top 50 cell types by neuron count](figures/cells_per_type.png)
 
-*Figure 1: Top 50 cell types by neuron count, coloured by class. The distribution is right-skewed (median 1, mean 6.7). Columnar OL neurons dominate, with KCs (KCab, KCg-m) as the only non-OL types in the top 50.*
+*Figure 1: Top 50 cell types by neuron count, coloured by class. The distribution is right-skewed (median 1, mean 6.7). Columnar OL neurons dominate, with KCs (KCab, KCg-m) as the only non-OL types in the top 30.*
 
 ## Type selection for visualization
 
