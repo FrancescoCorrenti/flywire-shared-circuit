@@ -4,7 +4,7 @@ Francesco Correnti - June 2026
 
 ## Problem
 
-The goal is to identify the largest connected directed induced subgraph that is isomorphic across three *Drosophila* connectome datasets - **FAFB** (female adult fly brain), **BANC** (female adult nerve cord & brain), and **Male CNS** - using the edge lists provided by the FlyWire challenge.
+The goal is to identify the largest directed induced subgraph that is isomorphic across three *Drosophila* connectome datasets - **FAFB** (female adult fly brain), **BANC** (female adult nerve cord & brain), and **Male CNS** - using the edge lists provided by the FlyWire challenge.
 
 A valid solution consists of **N** neuron triplets `(f_i, b_i, m_i)` - one FAFB, one BANC, and one MCNS neuron per row - such that the three directed subgraphs induced by the selected neurons are identical in edge structure. The objective is to maximise **N**.
 
