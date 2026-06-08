@@ -49,7 +49,7 @@ The two heaviest inter-class flows are ${\color[RGB]{68,119,170}\text{OL}}$ → 
 
 ![Top 50 cell types by neuron count](figures/cells_per_type.png)
 
-*Figure 1: Top 50 cell types by neuron count, coloured by class. The distribution is right-skewed (median 1, mean 6.7). Columnar OL neurons dominate, with KCs (KCab, KCg-m) as the only non-OL types in the top 50.*
+*Figure 1: Top 50 cell types by neuron count, coloured by class. The distribution is right-skewed (median 1, mean 6.7). Columnar OL neurons dominate, with KCs (KCab, KCg-m) as the only non-OL types in the top 30.*
 
 ## Type selection for visualization
 
