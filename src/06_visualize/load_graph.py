@@ -1,6 +1,6 @@
 """
 06_visualize / load_graph.py
-Carica un CSV deliverable e costruisce il sottografo indotto con annotazioni.
+Loads a deliverable CSV and builds the induced subgraph with annotations.
 """
 import csv
 import os
@@ -17,7 +17,7 @@ DATASETS = ("FAFB", "BANC", "MCNS")
 
 
 def load_submission_ids(csv_path, dataset="FAFB"):
-    """Legge la colonna del dataset dal CSV deliverable (3 colonne × N righe)."""
+    """Reads the dataset column from the deliverable CSV (3 columns × N rows)."""
     if dataset not in DATASETS:
         raise ValueError("dataset must be one of %s" % (DATASETS,))
 
@@ -31,7 +31,7 @@ def load_submission_ids(csv_path, dataset="FAFB"):
 
 
 def load_node_annotations(dataset):
-    """Neurone → zona, tipo, side da nodes_{dataset}.csv."""
+    """Neuron -> zone, type, side from nodes_{dataset}.csv."""
     path = os.path.join(TG, "nodes_%s.csv" % dataset)
     nodes = pd.read_csv(path, dtype={"id": str})
     nodes["id"] = nodes["id"].str.strip()
@@ -42,7 +42,7 @@ def load_node_annotations(dataset):
 
 
 def load_induced_edges(dataset, neuron_ids):
-    """Archi reali tra neuroni selezionati (sottografo indotto)."""
+    """Real edges among selected neurons (induced subgraph)."""
     neurons = set(str(n) for n in neuron_ids)
     path = os.path.join(DATA, EDGE[dataset])
 
@@ -61,8 +61,8 @@ def load_induced_edges(dataset, neuron_ids):
 
 def build_circuit_graph(csv_path, dataset="FAFB"):
     """
-    Grafo diretto del circuito nel dataset scelto.
-    Attributi nodo: zone, type, side. Archi senza peso (peso=1).
+    Directed circuit graph for the chosen dataset.
+    Node attributes: zone, type, side. Unweighted edges.
     """
     neuron_ids = load_submission_ids(csv_path, dataset)
     zone_map, type_map, side_map = load_node_annotations(dataset)

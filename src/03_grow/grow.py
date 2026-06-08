@@ -234,7 +234,7 @@ def _worker_job(args):
     sys.stdout=open(log_path,"w",buffering=1)
     only=None if zone=="FREE" else zone
     try:
-        print("Job: zona=%s seed=%s->%s rand=%d pid=%d"%(zone,ta,tb,rand_seed,os.getpid()),flush=True)
+        print("Job: zone=%s seed=%s->%s rand=%d pid=%d"%(zone,ta,tb,rand_seed,os.getpid()),flush=True)
         C=grow_one_seed(G,tset,typ_of,zone_of,ta,tb,time.time()+86400,
                         diverse=False,type_idx=type_idx,only_zone=only)
         if C is None:
@@ -303,9 +303,9 @@ def grow_zone(G,tset,typ_of,zone_of,zone,deadline,all_seeds=None,n_seeds=5,type_
         if time.time()>=deadline: break
         C=grow_one_seed(G,tset,typ_of,zone_of,ta,tb,deadline,diverse=False,type_idx=type_idx,only_zone=zone)
         if C is None:
-            print("    zona %s seed %d/%d %s->%s: FAILED"%(zone,i+1,len(seeds),ta,tb),flush=True)
+            print("    zone %s seed %d/%d %s->%s: FAILED"%(zone,i+1,len(seeds),ta,tb),flush=True)
             continue
-        print("    zona %s seed %d/%d %s->%s: N=%d"%(zone,i+1,len(seeds),ta,tb,C.nslot),flush=True)
+        print("    zone %s seed %d/%d %s->%s: N=%d"%(zone,i+1,len(seeds),ta,tb,C.nslot),flush=True)
         circuits.append(C)
     if not circuits: return None
     circuits.sort(key=lambda c:-c.nslot)
@@ -317,7 +317,7 @@ def grow_zone(G,tset,typ_of,zone_of,zone,deadline,all_seeds=None,n_seeds=5,type_
         saturate_all(main,G,deadline,type_idx)
         n1=main.nslot
         if n1>n0:
-            print("    zona %s intra-merge: +%d -> N=%d"%(zone,n1-n0,n1),flush=True)
+            print("    zone %s intra-merge: +%d -> N=%d"%(zone,n1-n0,n1),flush=True)
     return main
 
 def find_bridge_cells(main,other,G,type_idx,deadline):
@@ -360,7 +360,7 @@ def merge_zone_circuits(zone_circuits,G,typ_of,zone_of,deadline,type_idx=None):
     if not zone_circuits: return None
     items=sorted(zone_circuits.items(),key=lambda kv:-kv[1].nslot)
     main_zone,main=items[0]
-    print("  Base: zona %s, N=%d"%(main_zone,main.nslot),flush=True)
+    print("  Base: zone %s, N=%d"%(main_zone,main.nslot),flush=True)
     others=items[1:]
     def merge_prio(kv):
         zone,circ=kv
@@ -376,17 +376,17 @@ def merge_zone_circuits(zone_circuits,G,typ_of,zone_of,deadline,type_idx=None):
             n0=main.nslot
             br=find_bridge_cells(main,circ,G,type_idx,deadline)
             if br>0:
-                print("  Bridge cells zona %s: +%d -> N=%d"%(zone,br,main.nslot),flush=True)
+                print("  Bridge cells zone %s: +%d -> N=%d"%(zone,br,main.nslot),flush=True)
             added=merge_circuits(main,circ,G)
             if added>0:
                 print("  Direct merge zone %s: +%d -> N=%d"%(zone,added,main.nslot),flush=True)
             ext=extend_frontier_batch(main,G,typ_of,zone_of,deadline,diverse=True,require_connected=True)
             if ext>0:
-                print("  Extend zona %s: +%d types -> N=%d"%(zone,ext,main.nslot),flush=True)
+                print("  Extend zone %s: +%d types -> N=%d"%(zone,ext,main.nslot),flush=True)
             saturate_all(main,G,deadline,type_idx)
             n1=main.nslot
             if n1>n0:
-                print("  Merge round zona %s: N=%d (+%d)"%(zone,n1,n1-n0),flush=True)
+                print("  Merge round zone %s: N=%d (+%d)"%(zone,n1,n1-n0),flush=True)
                 stall=0
             else:
                 stall+=1
@@ -478,7 +478,7 @@ def run(template_rel,n_seeds=3,n_workers=8,worker_id=0,free=False):
                 seed_counter+=1
 
     mode_str="FREE (no zone filter)" if free else "%d zone x %d seeds"%(len(zones),n_seeds)
-    print("\nPhase 1: %d jobs (%s), %d worker paralleli"%(
+    print("\nPhase 1: %d jobs (%s), %d parallel workers"%(
         len(jobs),mode_str,n_workers),flush=True)
     print("  Logs in: %s"%log_dir,flush=True)
 
@@ -494,10 +494,10 @@ def run(template_rel,n_seeds=3,n_workers=8,worker_id=0,free=False):
                 j=futures[fut]
                 if r is not None:
                     results.append(r)
-                    print("  [%d/%d] zona %-20s %s->%s : N=%d"%(
+                    print("  [%d/%d] zone %-20s %s->%s : N=%d"%(
                         done_count,len(jobs),r["zone"],r["ta"],r["tb"],r["N"]),flush=True)
                 else:
-                    print("  [%d/%d] zona %-20s %s->%s : FAILED"%(
+                    print("  [%d/%d] zone %-20s %s->%s : FAILED"%(
                         done_count,len(jobs),j[0],j[1],j[2]),flush=True)
     else:
         _worker_init(path,log_dir)
@@ -506,13 +506,13 @@ def run(template_rel,n_seeds=3,n_workers=8,worker_id=0,free=False):
             r=_worker_job(j)
             if r is not None:
                 results.append(r)
-                print("  [%d/%d] zona %-20s %s->%s : N=%d"%(
+                print("  [%d/%d] zone %-20s %s->%s : N=%d"%(
                     done_count,len(jobs),r["zone"],r["ta"],r["tb"],r["N"]),flush=True)
             else:
-                print("  [%d/%d] zona %-20s %s->%s : FAILED"%(
+                print("  [%d/%d] zone %-20s %s->%s : FAILED"%(
                     done_count,len(jobs),j[0],j[1],j[2]),flush=True)
 
-    print("\nPhase 1 done: %d circuiti da %d jobs"%(len(results),len(jobs)),flush=True)
+    print("\nPhase 1 done: %d circuits from %d jobs"%(len(results),len(jobs)),flush=True)
     if not results:
         print("No circuits grown!",flush=True)
         return
@@ -525,7 +525,7 @@ def run(template_rel,n_seeds=3,n_workers=8,worker_id=0,free=False):
         for i,r in enumerate(results):
             print("  circuit %d: N=%d (%s->%s)"%(i,r["N"],r["ta"],r["tb"]),flush=True)
         best=circuits[0]
-        print("\nPhase 2: merge %d circuiti free"%(len(circuits)),flush=True)
+        print("\nPhase 2: merge %d free circuits"%(len(circuits)),flush=True)
         print("  Base: N=%d"%(best.nslot),flush=True)
         for other in circuits[1:]:
             n0=best.nslot
@@ -553,10 +553,10 @@ def run(template_rel,n_seeds=3,n_workers=8,worker_id=0,free=False):
                 saturate_all(main,G,deadline,type_idx)
                 n1=main.nslot
                 if n1>n0:
-                    print("  zona %s intra-merge: +%d -> N=%d"%(zone,n1-n0,n1),flush=True)
+                    print("  zone %s intra-merge: +%d -> N=%d"%(zone,n1-n0,n1),flush=True)
             zone_circuits[zone]=main
-            print_status("zona %s"%zone,main,G)
-        print("\nPhase 2: merge %d circuiti"%(len(zone_circuits)),flush=True)
+            print_status("zone %s"%zone,main,G)
+        print("\nPhase 2: merge %d circuits"%(len(zone_circuits)),flush=True)
         best=merge_zone_circuits(zone_circuits,G,typ_of,zone_of,deadline,type_idx=type_idx)
 
     if best:

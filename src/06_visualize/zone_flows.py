@@ -1,6 +1,6 @@
 """
 06_visualize / zone_flows.py
-Frecce inter-zona: centro sorgente → fuori cluster destinazione, lane parallele, spessore ∝ count.
+Inter-zone arrows: source center -> outside destination cluster, parallel lanes, width proportional to count.
 """
 import math
 from collections import Counter, defaultdict
@@ -12,11 +12,11 @@ from matplotlib.patches import FancyArrowPatch
 _ARROW_ZORDER = 0.8
 _FLOW_COLOR = "#2a2a2a"
 _LANE_RAD = 0.26
-_ASYM_RATIO = 3.0  # >> : flusso debole molto più trasparente
+_ASYM_RATIO = 3.0  # >> : weak flow made much more transparent
 
 
 def _zone_label_bbox(pts):
-    """BBox approssimativo del riquadro etichetta sotto al cluster."""
+    """Approximate bounding box of the label box below the cluster."""
     arr = np.asarray(pts)
     cx = float(arr[:, 0].mean())
     y_top = float(arr[:, 1].min() - 0.18 * max(float(np.ptp(arr[:, 1])), 0.35))
@@ -25,7 +25,7 @@ def _zone_label_bbox(pts):
 
 
 def _nudge_from_label(p_end, bbox, p_start):
-    """Sposta la punta fuori dal riquadro etichetta se ci cade dentro."""
+    """Moves the tip outside the label box if it falls inside."""
     p = np.asarray(p_end, dtype=float).copy()
     xmin, xmax, ymin, ymax = bbox
 
@@ -58,7 +58,7 @@ def _cluster_center(pts):
 
 
 def _outside_toward(pts, from_point, pad=0.40):
-    """Punto appena fuori dal cluster, lato rivolto verso from_point."""
+    """Point just outside the cluster, on the side facing from_point."""
     pts = np.asarray(pts)
     c = _cluster_center(pts)
     d = np.asarray(from_point, dtype=float) - c
@@ -78,12 +78,12 @@ def _flow_endpoints(by_zone, z_from, z_to, pad=0.40):
 
 
 def _lane_rad(z_from, z_to):
-    """Lane parallele: flusso inverso = curvatura opposta."""
+    """Parallel lanes: reverse flow = opposite curvature."""
     return _LANE_RAD if (z_from, z_to) <= (z_to, z_from) else -_LANE_RAD
 
 
 def _flow_alpha(cnt, rev_cnt, t):
-    """Alpha pieno sul verso dominante; trasparenza sul verso debole se cnt >> rev."""
+    """Full alpha on the dominant direction; transparent on the weak direction if cnt >> rev."""
     base = 0.50 + 0.38 * t
     if rev_cnt <= 0:
         return base
@@ -151,7 +151,7 @@ def draw_directed_zone_arrows(ax, G, dzones, pos, pad=0.40, show_other=True):
 def inter_zone_flow_legend_handles():
     return [
         Line2D(
-            [0], [0], color=_FLOW_COLOR, linewidth=1.8,
-            marker=">", markersize=6, label="synapse direction",
+            [0], [0], color=_FLOW_COLOR, linewidth=2.2,
+            marker=">", markersize=8, label="synapse direction",
         ),
     ]

@@ -57,10 +57,10 @@ class Circuit:
     """Maps common slot -> (cell per dataset); maintains induced edges per dataset."""
     def __init__(self, G):
         self.G = G
-        self.cell2slot = {d: {} for d in DS}   # cella -> slot
-        self.slot2cell = {d: {} for d in DS}   # slot -> cella
-        self.slot_type = {}                    # slot -> tipo
-        self.E = {d: set() for d in DS}         # archi indotti (in spazio-slot)
+        self.cell2slot = {d: {} for d in DS}   # cell -> slot
+        self.slot2cell = {d: {} for d in DS}   # slot -> cell
+        self.slot_type = {}                    # slot -> type
+        self.E = {d: set() for d in DS}         # induced edges (slot-space)
         self.nslot = 0
 
     def _edges_if_added(self, d, cell, slot):
@@ -70,7 +70,7 @@ class Circuit:
             if v in c2s: new.add((slot, c2s[v]))
         for u in g.predecessors(cell):
             if u in c2s: new.add((c2s[u], slot))
-        # self loop cell->cell
+        # self-loop cell->cell
         if g.has_edge(cell, cell): new.add((slot, slot))
         return new
 
@@ -130,13 +130,13 @@ def grow_from_seed(G, type_edges_sorted, seed_pair, typ_of, deadline):
         if not found:
             return C
         seed_cells[d] = found
-    # insert src (slot0) then tgt (slot1)
+    # insert source (slot 0) then target (slot 1)
     if not C.try_add_triple({d: seed_cells[d][0] for d in DS}, A, False):
         return C
     if not C.try_add_triple({d: seed_cells[d][1] for d in DS}, B, True):
         return C
 
-    # growth
+    # greedy growth
     while time.time() < deadline:
         adj, types = C.frontier_candidates(typ_of)
         added = False
@@ -163,8 +163,8 @@ def run(template_rel, seconds, restarts):
     tpl, tset, te, G = build_graphs(template_rel)
     typ_of = {d: {c: G[d].nodes[c]["type"] for c in G[d]} for d in DS}
     seeds = strong_type_edges(G)
-    print(f"[{name}] {sum(g.number_of_nodes() for g in G.values())} celle tot, "
-          f"{len(seeds)} archi-tipo seed")
+    print(f"[{name}] {sum(g.number_of_nodes() for g in G.values())} total cells, "
+          f"{len(seeds)} type-edge seeds")
 
     best = None
     t0 = time.time(); deadline_all = t0 + seconds
@@ -176,13 +176,13 @@ def run(template_rel, seconds, restarts):
         tried += 1
         if best is None or C.nslot > best.nslot:
             best = C
-            print(f"  seed {seed[0]}->{seed[1]}: N={C.nslot} archi={len(C.E['FAFB'])} "
-                  f"(NUOVO BEST)")
+            print(f"  seed {seed[0]}->{seed[1]}: N={C.nslot} edges={len(C.E['FAFB'])} "
+                  f"(NEW BEST)")
             pickle.dump({"name": name, "template": template_rel,
                          "slot2cell": best.slot2cell, "E": best.E,
                          "N": best.nslot}, open(best_path, "wb"))
-    print(f"[{name}] provati {tried} seed. BEST N={best.nslot} "
-          f"archi={len(best.E['FAFB'])} -> {best_path}")
+    print(f"[{name}] tried {tried} seeds. BEST N={best.nslot} "
+          f"edges={len(best.E['FAFB'])} -> {best_path}")
     return best
 
 

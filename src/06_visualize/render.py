@@ -1,6 +1,6 @@
 """
 06_visualize / render.py
-Rendering overview per zona anatomica.
+Overview rendering by anatomical zone.
 """
 import math
 from collections import Counter, defaultdict
@@ -25,9 +25,9 @@ _ZONE_COLORS = {
     "unknown": "#999999",
 }
 
-# Zone rade → bucket "other" nel grafico overview
+# Sparse zones -> "other" bucket in the overview graph
 _ZONE_AS_OTHER = frozenset({"motor", "ascending", "visual_centrifugal"})
-SHOW_OTHER = False  # temporaneo: nascondi cluster "other"
+SHOW_OTHER = False  # temporary: hide "other" cluster
 
 
 def _display_zone(zone):

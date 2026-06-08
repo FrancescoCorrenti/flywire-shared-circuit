@@ -1,8 +1,8 @@
 """
-Genera un URL Neuroglancer con tutti i neuroni FAFB del circuito.
-Usa fafbseg.flywire.encode_url per evitare il limite URL di Codex.
+Generates a Neuroglancer URL with all FAFB neurons of the circuit.
+Uses fafbseg.flywire.encode_url to avoid the Codex URL length limit.
 
-Uso:
+Usage:
   python codex_url.py --csv path/to/submission.csv
 """
 import argparse, csv

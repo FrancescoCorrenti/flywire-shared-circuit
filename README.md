@@ -1,160 +1,59 @@
-# Largest Shared Neural Circuit — FlyWire Qualification Challenge
+# Largest Shared Neural Circuit - FlyWire Qualification Challenge
 
-Find the largest connected directed induced subgraph that is mutually isomorphic across three *Drosophila* connectome datasets (FAFB, BANC, Male CNS).
+Francesco Correnti - June 2026
 
-**Result: N = 4485 neurons, 5450 edges, 8 brain zones.**
+## Problem
 
-## Requirements
+The goal is to identify the largest connected directed induced subgraph that is isomorphic across three *Drosophila* connectome datasets - **FAFB** (female adult fly brain), **BANC** (female adult nerve cord & brain), and **Male CNS** - using the edge lists provided by the FlyWire challenge.
 
-- Python 3.10+
-- pandas, networkx, numpy
-- pyarrow (for `.feather` files)
+A valid solution consists of **N** neuron triplets `(f_i, b_i, m_i)` - one FAFB, one BANC, and one MCNS neuron per row - such that the three directed subgraphs induced by the selected neurons are identical in edge structure. The objective is to maximise **N**.
 
-```bash
-pip install pandas networkx numpy pyarrow
-```
+### Assumptions
 
-Optional (for visualization):
-```bash
-pip install navis fafbseg matplotlib
-```
+In addition to the constraints imposed by the challenge, two assumptions are adopted:
 
-## Input Data
+1. **Type correspondence** - a neuron in one dataset can only match a neuron of the same cell type in another dataset.
+2. **Connected graph** - the final graph should be a single connected component.
 
-The pipeline expects the following directory structure:
+The challenge specification provides only the three synaptic edge lists. To assign neuronal labels, each graph is linked to publicly available annotation tables:
 
-```
-data/
-├── fafb_783_edge_list.csv          # FAFB edge list (src,tgt)
-├── banc_626_edge_list.csv          # BANC edge list (src,tgt)
-├── mcns_0.9_edge_list.csv          # Male CNS edge list (src,tgt)
-├── FAFB/
-│   ├── classification.csv.gz       # super_class, side (from Codex)
-│   └── consolidated_cell_types.csv.gz  # primary_type (from Codex)
-├── BANC/
-│   └── codex_annotations_flat_table.tab  # cell_type, super_class, side (from Codex)
-└── MCNS/
-    └── body-annotations-male-cns-v0.9-minconf-0.5.feather  # type, superclass, somaSide (from Neuprint)
-```
-
-**Edge lists** are the sole source of edges (provided by the challenge). Annotation files are used only to assign cell type and brain zone labels to neurons.
-
-### Edge list format
-
-Each edge list is a two-column CSV with header `pre,post` (or equivalent). Each row is a directed synaptic connection between two neuron IDs.
-
-### Annotation formats
-
-- **FAFB**: two gzipped CSVs from FlyWire Codex. `classification.csv.gz` provides `root_id, super_class, side`. `consolidated_cell_types.csv.gz` provides `root_id, primary_type`.
-- **BANC**: tab-separated flat table from Codex with columns `pt_root_id, cell_type, super_class, side`.
-- **MCNS**: Apache Feather file from Neuprint (Janelia) with columns `bodyId, flywireType, type, superclass, somaSide`.
+- **FAFB** and **BANC** - FlyWire tables: `super_class` defines the common class/brain-region vocabulary; `primary_type` and `cell_type` define the cell-type vocabulary.
+- **Male CNS** - NeuPrint body metadata: `superclass` maps to the same class vocabulary; `flywireType/type` defines the cell type.
 
 ## Pipeline
 
-Run all steps from the project root directory.
+### (1) Type graph and seed selection
 
-### Step 1 — Build neuron tables
+For every pair of cell types `(A, B)`, the existence of at least one `A → B` edge in each dataset is checked. This yields a **type graph** of 5,116 cell types and ~45,000 directed edges, filtering out cell types (and their neurons) whose connectivity is not conserved across all three datasets - a necessary condition for any valid isomorphic subgraph given the type correspondence assumption.
 
-```bash
-python src/01_dataset/build_dataset.py
-```
+For each intra-class pair `(A_C, B_C)` within a given class **C**, a seed score is computed as `deg(A_C) + deg(B_C)`, where `deg(·)` is the number of cell types connected by at least one edge to or from the given cell type in the type graph, favouring pairs with a large expansion frontier. Ties are broken by the minimum neuron-level multiplicity of the `A → B` edge across the three datasets.
 
-Outputs `type_graphs/nodes_{FAFB,BANC,MCNS}.csv`: unified neuron → (zone, type, side) tables.
+### (2) Greedy cell-level growth
 
-### Step 2 — Build conserved type graph
+A circuit is grown from a seed edge by alternating two operators until no further progress is made.
 
-```bash
-python src/02_type_graph/build_type_graph.py
-python src/02_type_graph/build_multiplicity.py
-```
+- **Extend** adds neurons of new cell types. It selects a cell type from the frontier of the current circuit - a cell type not already in the circuit that has an edge in the type graph to at least one cell type already in the circuit - then searches for a neuron triplet (one per dataset) realizing that edge, checks whether its addition preserves isomorphism, and adds the triplet to the circuit.
+- **Saturate** adds more neurons of cell types already present. Each neuron still outside the circuit is characterised by its **signature**: a list of (neuron in the circuit, edge direction) pairs for each synapse it has with a neuron in the circuit. Neurons of the same cell type whose signatures coincide across all three datasets can be added in batch, as they respect the constraints by construction.
 
-Outputs `type_graphs/type_graph_inter.csv` and `type_graphs/type_graph_intra.csv`: directed type→type edges conserved across all three datasets, with cell-level multiplicity counts.
+### (3) Parallelism and merge
 
-### Step 3 — Grow cell-level circuit
+Eight independent workers grow circuits from diversified seeds (round-robin across classes). The best (higher **N**) worker result is taken as base; the remaining seven are merged via bridge-cell search and further extend/saturate cycles.
 
-```bash
-python src/03_grow/grow.py --template cand/all_types.csv --n-seeds 3 --n-workers 8 --worker-id 0 --free
-```
+## Result
 
-Grows a circuit from diversified seeds using greedy expansion with isomorphism-preserving `try_add_triple`. Runs parallel workers, each producing a `.pkl` file in `type_graphs/runs_all_types/`.
+| Quantity | Value |
+| --- | ---: |
+| Neuron triplets (*N*) | 4,485 |
+| Cell types | 673 |
+| Directed edges | 5,450 |
 
-**Key parameters:**
-- `--template`: CSV listing conserved types (columns: `type, zone`)
-- `--n-seeds`: number of seed edges per worker
-- `--n-workers`: parallel processes per worker instance
-- `--worker-id`: unique ID for this run (determines output filename)
-- `--free`: unconstrained zone growth (recommended)
+The greedy approach converges to ~4,000-4,500 neurons independently of seed choice. Eight independent workers seeded from different classes produce consistent class proportions (±10 percentage points), suggesting this is near the structural limit imposed by cross-dataset edge divergence rather than an artefact of seed choice.
 
-### Step 4 — Mega-merge workers
+Biological interpretation, figures, and references are in [`science.md`](science.md).
 
-```bash
-python src/04_merge/merge.py --template cand/all_types.csv --pkl-dir runs_all_types
-```
+## Limitations
 
-Takes all `worker_*.pkl` files, uses the best as base, and iteratively merges others via bridge-cell search + direct merge + extend + saturate. Outputs `worker_099_mega.pkl` and `submission_mega.csv`.
+1. **Type correspondence assumption.** Matching neurons only by cell type is a strong constraint: it makes the result sensitive to annotation quality and consistency across datasets.
+2. **Greedy, non-optimal search.** The extend/saturate loop is greedy and order-dependent. Different seed choices converge to similar sizes (~4,000-4,500), but there is no guarantee that the global maximum has been reached.
+3. **Single connected component.** Requiring connectivity may exclude valid isolated clusters of conserved neurons that are not reachable from the main component.
 
-### Step 5 — Verify and export
-
-```bash
-# Verify from pkl
-python src/05_verify/verify.py --pkl type_graphs/runs_all_types/worker_099_mega.pkl
-
-# Verify from CSV (independent, no project imports)
-python src/05_verify/verify_csv.py --csv submission_mega.csv
-
-# Export CSV from pkl
-python src/05_verify/verify.py --pkl type_graphs/runs_all_types/worker_099_mega.pkl --csv submission.csv
-```
-
-Verification checks:
-1. **No duplicates**: each neuron appears at most once per dataset
-2. **Isomorphism**: induced edge sets in slot-space are identical across all three datasets
-3. **Connectivity**: the slot graph is a single connected component
-4. **Induced subgraph**: no real edge between selected neurons is missing
-
-## Output Format
-
-The submission CSV has three columns and N rows:
-
-```csv
-FAFB,BANC,MCNS
-720575940623047194,720575941613082588,76821
-...
-```
-
-Each row is a neuron triplet: the three cells correspond to the same "slot" in the shared circuit, meaning they have identical directed connectivity patterns in slot-space.
-
-## Project Structure
-
-```
-src/
-├── 01_dataset/        Build unified neuron annotation tables
-├── 02_type_graph/     Build conserved type-level graph
-├── 03_grow/           Core algorithm: greedy circuit growth
-│   ├── circuit.py     Circuit class with try_add_triple
-│   ├── cell_graph.py  Load cell-level graphs from edge lists
-│   ├── grow.py        Main pipeline: parallel growth + merge
-│   └── signatures.py  Signature-based saturation
-├── 04_merge/          Mega-merge multiple worker results
-└── 05_verify/         Verification and visualization tools
-```
-
-## Algorithm Summary
-
-1. **Type correspondence assumption**: neurons match only if they share the same cell type across datasets.
-2. **Conserved type graph**: keep only type→type edges present in all three datasets.
-3. **Greedy cell-level growth**: starting from a seed edge, iteratively add neuron triplets that preserve isomorphism (identical induced edges in all three datasets) and connectivity.
-4. **Signature saturation**: batch-add cells sharing the same external connectivity signature.
-5. **Parallel workers + mega-merge**: run independent workers with diversified seeds, then merge results.
-
-## Citation
-
-If you use this code, please cite:
-
-- Dorkenwald, S. et al. (2024). Neuronal wiring diagram of an adult brain. *Nature*, 634, 124–138.
-- Azevedo, A. et al. (2024). Connectomic reconstruction of a female-adult *Drosophila* ventral nerve cord. *Nature*, 631, 360–368.
-- Takemura, S. et al. (2024). A connectome of the male *Drosophila* ventral nerve cord. *eLife*, 13, RP97766.
-
-## License
-
-MIT
