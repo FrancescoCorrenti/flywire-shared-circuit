@@ -17,8 +17,11 @@ In addition to the constraints imposed by the challenge, two assumptions are ado
 
 The challenge specification provides only the three synaptic edge lists. To assign neuronal labels, each graph is linked to publicly available annotation tables:
 
-- **FAFB** and **BANC** - FlyWire tables: `super_class` defines the common class/brain-region vocabulary; `primary_type` and `cell_type` define the cell-type vocabulary.
-- **Male CNS** - NeuPrint body metadata: `superclass` maps to the same class vocabulary; `flywireType/type` defines the cell type.
+| Dataset | File | Fields used |
+|---------|------|-------------|
+| FAFB | `classification.csv.gz` + `consolidated_cell_types.csv.gz` (FlyWire Codex) | `super_class` → zone; `primary_type` → cell type; `side` → laterality |
+| BANC | `codex_annotations_flat_table.tab` (FlyWire Codex) | `super_class` → zone; `cell_type` → cell type; `side` → laterality |
+| Male CNS | `body-annotations-male-cns-v0.9-minconf-0.5.feather` (NeuPrint/neuPrint+) | `superclass` → zone; `flywireType` (fallback: `type`) → cell type; `somaSide` → laterality |
 
 ## Pipeline
 
