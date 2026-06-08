@@ -33,7 +33,7 @@ Two thirds of the circuit sits in ${\color[RGB]{68,119,170}\text{OL}}$. This is 
 
 ## Graph topology
 
-The circuit type graph has 673 nodes and 1,133 directed edges. Feedforward loops outnumber 3-cycles 407:153 (ratio 2.7:1), so the overall architecture leans heavily feedforward. Only 94 edge pairs (8.3%) are reciprocal, and most of those sit at the ${\color[RGB]{238,102,119}\text{CB}}$-${\color[RGB]{34,136,51}\text{SE}}$ interface (38 pairs, the ORN-lLN back-and-forth in the antennal lobe) or within ${\color[RGB]{238,102,119}\text{CB}}$ itself (33 pairs).
+The circuit type graph has 673 nodes and 1,133 directed edges. Feedforward loops outnumber 3-cycles 407:153 (ratio 2.7:1), so the overall architecture leans heavily feedforward. Only 94 edge pairs (8.3%) are reciprocal, and most of those sit at the ${\color[RGB]{238,102,119}\text{CB}}$ - ${\color[RGB]{34,136,51}\text{SE}}$ interface (38 pairs, the ORN-lLN back-and-forth in the antennal lobe) or within ${\color[RGB]{238,102,119}\text{CB}}$ itself (33 pairs).
 
 The inter-class flow matrix is almost strictly feedforward:
 
