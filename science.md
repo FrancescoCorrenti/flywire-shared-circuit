@@ -6,8 +6,9 @@ FlyWire Qualification Challenge, June 2026 - Francesco Correnti
 
 - **Circuit** - the largest connected directed induced subgraph found to be isomorphic across the three datasets (FAFB, BANC, Male CNS). It contains N = 4,485 neuron triplets.
 - **Cell type** - a neuronal identity label (e.g. Mi1, KCab) shared across datasets; neurons of the same cell type are treated as interchangeable for matching purposes.
-- **Class** - a coarse brain-region category to which each cell type belongs. Five classes appear in the circuit:
+- **Class** - a coarse brain-region category (derived from the `super_class` field in Codex/NeuPrint annotations) to which each cell type belongs. Eight classes appear in the circuit, five of which account for 99.8% of neurons:
 ${\color[RGB]{68,119,170}\textbf{optic\ lobe\ (OL)}}$ · ${\color[RGB]{238,102,119}\textbf{central\ brain\ (CB)}}$ · ${\color[RGB]{34,136,51}\textbf{sensory\ (SE)}}$ · ${\color[RGB]{204,187,68}\textbf{visual\ projection\ (VP)}}$ · ${\color[RGB]{170,51,119}\textbf{descending\ (DN)}}$
+The remaining three (visual centrifugal, motor, ascending) contribute 7 neurons total.
 - **Type graph** - a directed graph whose nodes are cell types and whose edges represent conserved synaptic connectivity (an A → B edge exists iff at least one A → B cell-level edge is present in each of the three datasets). The full type graph has 5,116 nodes and ~45,000 edges.
 - **Circuit type graph** - the subgraph of the type graph restricted to the 673 cell types present in the circuit (673 nodes, 1,133 edges). Unless stated otherwise, degree and topology metrics in this document refer to this restricted graph.
 - **Neuron triplet** - a matched set of three neurons (one per dataset) of the same cell type, occupying one slot in the circuit.

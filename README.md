@@ -19,9 +19,9 @@ The challenge specification provides only the three synaptic edge lists. To assi
 
 | Dataset | File | Fields used |
 |---------|------|-------------|
-| FAFB | `classification.csv.gz` + `consolidated_cell_types.csv.gz` (FlyWire Codex) | `super_class` → zone; `primary_type` → cell type; `side` → laterality |
-| BANC | `codex_annotations_flat_table.tab` (FlyWire Codex) | `super_class` → zone; `cell_type` → cell type; `side` → laterality |
-| Male CNS | `body-annotations-male-cns-v0.9-minconf-0.5.feather` (NeuPrint/neuPrint+) | `superclass` → zone; `flywireType` (fallback: `type`) → cell type; `somaSide` → laterality |
+| FAFB | `classification.csv.gz` + `consolidated_cell_types.csv.gz` (FlyWire Codex) | `super_class` → class; `primary_type` → cell type; `side` → laterality |
+| BANC | `codex_annotations_flat_table.tab` (FlyWire Codex) | `super_class` → class; `cell_type` → cell type; `side` → laterality |
+| Male CNS | `body-annotations-male-cns-v0.9-minconf-0.5.feather` (NeuPrint/neuPrint+) | `superclass` → class; `flywireType` (fallback: `type`) → cell type; `somaSide` → laterality |
 
 ## Pipeline
 
@@ -40,7 +40,9 @@ A circuit is grown from a seed edge by alternating two operators until no furthe
 
 ### (3) Parallelism and merge
 
-Eight independent workers grow circuits from diversified seeds (round-robin across classes). The best (higher **N**) worker result is taken as base; the remaining seven are merged via bridge-cell search and further extend/saturate cycles.
+Each worker grows multiple circuits from diversified seeds (`--n-seeds`), one circuit per seed. Within a worker, each seed is grown independently using `-j` parallel processes (e.g. `-j 8` runs 8 seeds in parallel on separate CPU cores). The `--free` flag enables unconstrained growth: all classes are eligible for expansion at every step, rather than restricting each seed to a single class. Once all seeds are exhausted, the worker performs an **intra-worker merge**: the largest circuit is taken as base, and the others are folded in via repeated extend/saturate cycles. The worker outputs a single `.pkl` file.
+
+Multiple workers are launched in parallel (`--worker-id 0, 1, 2, ...`), each producing an independent result. A separate **inter-worker mega-merge** (`merge.py`) then combines all worker outputs: the largest is taken as base, and each remaining worker's circuit is merged in via repeated extend/saturate cycles. The final result is written to `worker_099_mega.pkl` and exported as a CSV.
 
 ## Result
 
@@ -50,7 +52,9 @@ Eight independent workers grow circuits from diversified seeds (round-robin acro
 | Cell types | 673 |
 | Directed edges | 5,450 |
 
-The greedy approach converges to ~4,000-4,500 neurons independently of seed choice. Eight independent workers seeded from different classes produce consistent class proportions (±10 percentage points), suggesting this is near the structural limit imposed by cross-dataset edge divergence rather than an artefact of seed choice.
+The submitted result was obtained with 8 workers of 10 seeds each, using unconstrained growth (`--free`). The best individual seeds already converge to ~4,000 neurons (e.g. TmY5a → TmY5a reaches N = 4,242). Intra-worker and inter-worker merges together add ~250 neurons on top.
+
+Different seeds and workers produce consistent class proportions (±10 percentage points), suggesting this is near the structural limit imposed by cross-dataset edge divergence rather than an artefact of seed choice.
 
 Biological interpretation, figures, and references are in [`science.md`](science.md).
 
@@ -82,24 +86,29 @@ pip install networkx pandas pyarrow
 # Build neuron annotation tables
 python src/01_dataset/build_dataset.py
 
-# Build the conserved type graph
+# Build the conserved type graph and multiplicity tables
 python src/02_type_graph/build_type_graph.py
+python src/02_type_graph/build_multiplicity.py
 
-# Grow circuits (8 parallel workers, ~30-60 min)
-python src/03_grow/grow.py --template all_types.csv --n-seeds 3 --n-workers 8
+# Grow circuits — launch multiple workers (each in a separate terminal)
+# Each worker grows independently from diversified seeds; more workers = better merge
+python src/03_grow/grow.py --template cand/all_types.csv --n-seeds 5 -j 8 --worker-id 0 --free
+python src/03_grow/grow.py --template cand/all_types.csv --n-seeds 5 -j 8 --worker-id 1 --free
+# ... repeat with --worker-id 2, 3, etc.
 
-# Merge worker results into the best circuit
-python src/04_merge/merge.py --template all_types.csv --pkl-dir runs_all_types
+# Merge all worker results into the best circuit
+python src/04_merge/merge.py --template cand/all_types.csv --pkl-dir runs_all_types
 
 # Verify and export CSV
-python src/05_verify/verify.py --pkl type_graphs/runs_all_types/worker_099_mega.pkl --csv network.csv
+python src/05_verify/verify.py --pkl type_graphs/runs_all_types/worker_099_mega.pkl --csv submission.csv
 ```
 
-The final `network.csv` contains N rows of `(fafb_id, banc_id, mcns_id)` triplets.
+The final `submission.csv` contains N rows of `(fafb_id, banc_id, mcns_id)` triplets.
 
 ## Limitations
 
 1. **Type correspondence assumption.** Matching neurons only by cell type is a strong constraint: it makes the result sensitive to annotation quality and consistency across datasets.
 2. **Greedy, non-optimal search.** The extend/saturate loop is greedy and order-dependent. Different seed choices converge to similar sizes (~4,000-4,500), but there is no guarantee that the global maximum has been reached.
 3. **Single connected component.** Requiring connectivity may exclude valid isolated clusters of conserved neurons that are not reachable from the main component.
+4. **Naive merge strategy.** The current merge simply transfers cells from smaller circuits into the largest one via extend/saturate. Independent seeds produce substantially different circuits with many disjoint neurons, but the merge fails to incorporate most of them because extend/saturate can only add cells that are directly compatible with the base circuit's current state.
 

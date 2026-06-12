@@ -1,6 +1,6 @@
 """
 Zonal cell growth pipeline with parallelism.
-Usage: python grow.py --template cand/all_types.csv --n-seeds 3 --n-workers 8
+Usage: python grow.py --template cand/all_types.csv --n-seeds 3 -j 8
 """
 import os,sys,time,pickle,argparse,random,csv as csvmod
 import networkx as nx
@@ -418,7 +418,7 @@ def verify_pkl(bd):
             print("  %s: induced OK"%(ds),flush=True)
     return same,conn,induced_ok
 
-def run(template_rel,n_seeds=3,n_workers=8,worker_id=0,free=False):
+def run(template_rel,n_seeds=3,n_jobs=8,worker_id=0,free=False):
     name=os.path.splitext(os.path.basename(template_rel))[0]
     path=template_rel if os.path.isabs(template_rel) else os.path.join(TG,template_rel)
     import pandas as pd
@@ -479,13 +479,13 @@ def run(template_rel,n_seeds=3,n_workers=8,worker_id=0,free=False):
 
     mode_str="FREE (no zone filter)" if free else "%d zone x %d seeds"%(len(zones),n_seeds)
     print("\nPhase 1: %d jobs (%s), %d parallel workers"%(
-        len(jobs),mode_str,n_workers),flush=True)
+        len(jobs),mode_str,n_jobs),flush=True)
     print("  Logs in: %s"%log_dir,flush=True)
 
     results=[]
     done_count=0
-    if n_workers>1:
-        with ProcessPoolExecutor(max_workers=n_workers,
+    if n_jobs>1:
+        with ProcessPoolExecutor(max_workers=n_jobs,
                                  initializer=_worker_init,initargs=(path,log_dir)) as pool:
             futures={pool.submit(_worker_job,j):j for j in jobs}
             for fut in as_completed(futures):
@@ -606,9 +606,9 @@ if __name__=="__main__":
     ap=argparse.ArgumentParser()
     ap.add_argument("--template",required=True)
     ap.add_argument("--n-seeds",type=int,default=3)
-    ap.add_argument("--n-workers",type=int,default=8)
+    ap.add_argument("-j","--jobs",type=int,default=8,help="Parallel processes per worker")
     ap.add_argument("--worker-id",type=int,default=0)
     ap.add_argument("--free",action="store_true",help="Free growth without zone filter")
     a=ap.parse_args()
     if hasattr(sys.stdout,"reconfigure"): sys.stdout.reconfigure(line_buffering=True)
-    run(a.template,n_seeds=a.n_seeds,n_workers=a.n_workers,worker_id=a.worker_id,free=a.free)
+    run(a.template,n_seeds=a.n_seeds,n_jobs=a.jobs,worker_id=a.worker_id,free=a.free)
