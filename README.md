@@ -55,7 +55,7 @@ Multiple workers are launched in parallel (`--worker-id 0, 1, 2, ...`), each pro
 
 The submitted result was obtained with 8 workers of 10 seeds each, using unconstrained growth (`--free`). The best individual seeds already converge to ~4,000 neurons (e.g. TmY5a → TmY5a reaches N = 4,242). Intra-worker and inter-worker merges together add ~250 neurons on top.
 
-Different seeds and workers produce consistent class proportions (±10 percentage points), suggesting this is near the structural limit imposed by cross-dataset edge divergence rather than an artefact of seed choice.
+Different workers produce consistent class proportions (±10 percentage points), suggesting this is near the structural limit of the proposed method within a single worker.
 
 Biological interpretation, figures, and references are in [`science.md`](science.md).
 
