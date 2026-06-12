@@ -14,6 +14,7 @@ In addition to the constraints imposed by the challenge, two assumptions are ado
 
 1. **Type correspondence** - a neuron in one dataset can only match a neuron of the same cell type in another dataset.
 2. **Connected graph** - the final graph should be a single connected component.
+  UPDATE: 08/06/26 - This second assumption is now listed as a requirement for the challenge.
 
 The challenge specification provides only the three synaptic edge lists. To assign neuronal labels, each graph is linked to publicly available annotation tables:
 
